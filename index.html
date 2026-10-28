@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GreenRoots | Tree Plantation & Monitoring</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}">
+        <span class="brand-icon">🌱</span>
+        <span>GreenRoots <small>Tree Monitor</small></span>
+    </a>
+    <nav>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#tree-records">Tree records</a>
+        <a href="#contributors">Contributors</a>
+        <a href="#add-tree">Add a tree</a>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="hero" id="dashboard">
+        <div class="hero-content">
+            <p class="eyebrow">GROW A GREENER TOMORROW</p>
+            <h1>Every tree planted is a promise to our planet.</h1>
+            <p class="hero-description">
+                Keep track of trees planted, celebrate the people behind them,
+                and help every sapling grow into a healthier future.
+            </p>
+            <a class="button button-primary" href="#add-tree">＋ Register a tree</a>
+            <a class="button button-glass" href="#tree-records">Explore records ↓</a>
+        </div>
+        <div class="hero-art" aria-hidden="true">🌳</div>
+        <div class="hero-leaf leaf-one">🍃</div>
+        <div class="hero-leaf leaf-two">🌿</div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="section-block">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow dark-eyebrow">YOUR GREEN IMPACT</p>
+                <h2>Plantation overview</h2>
+                <p class="muted">A clear snapshot of all tree records saved in your database.</p>
+            </div>
+            <span class="live-label"><span></span> Updates from your records</span>
+        </div>
+        <div class="stats-grid">
+            <article class="stat-card">
+                <div class="stat-top"><span>Trees planted overall</span><span class="stat-icon">🌱</span></div>
+                <strong>{{ total_trees }}</strong>
+                <p>All registered trees</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Healthy trees</span><span class="stat-icon">💚</span></div>
+                <strong>{{ healthy_trees }}</strong>
+                <p>Reported as healthy</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Need attention</span><span class="stat-icon">💧</span></div>
+                <strong>{{ attention_trees }}</strong>
+                <p>Check care and watering</p>
+            </article>
+            <article class="stat-card">
+                <div class="stat-top"><span>Plantation sites</span><span class="stat-icon">📍</span></div>
+                <strong>{{ site_count }}</strong>
+                <p>Distinct recorded locations</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="two-column section-block">
+        <article class="panel">
+            <div class="panel-heading">
+                <div><h2>Tree health at a glance</h2><p class="muted">See how the recorded trees are doing.</p></div>
+                <span class="panel-emoji">🌿</span>
+            </div>
+            <div class="progress-label"><span>Healthy</span><b>{{ healthy_percent }}%</b></div>
+            <div class="progress-track"><div class="progress-fill" style="width: {{ healthy_percent }}%"></div></div>
+            <div class="progress-label care-label"><span>Needs attention</span><b>{{ attention_percent }}%</b></div>
+            <div class="progress-track"><div class="progress-fill progress-care" style="width: {{ attention_percent }}%"></div></div>
+            <div class="tip-box">
+                <span>💡</span>
+                <div><b>Why monitor trees?</b><p>Regular checks help people spot dry soil, damaged leaves, or other problems early and give young trees a better chance to survive.</p></div>
+            </div>
+        </article>
+
+        <article class="panel" id="contributors">
+            <div class="panel-heading">
+                <div><h2>Community contributors</h2><p class="muted">Who has planted the most trees?</p></div>
+                <span class="panel-emoji">🏆</span>
+            </div>
+            {% if contributors %}
+                {% for contributor in contributors %}
+                <div class="contributor-row">
+                    <div class="contributor-avatar">{{ loop.index }}</div>
+                    <div class="contributor-info">
+                        <b>{{ contributor['planter'] }}</b>
+                        <div class="mini-track"><span style="width: {{ (contributor['tree_count'] / contributors[0]['tree_count'] * 100) | round }}%"></span></div>
+                    </div>
+                    <strong class="contributor-count">{{ contributor['tree_count'] }}</strong>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><span>🌱</span><b>Your first tree starts the story.</b><p>Add a record with the planter's name to build the leaderboard.</p></div>
+            {% endif %}
+            <p class="tiny-note">Counts are calculated from the planter names in your tree records.</p>
+        </article>
+    </section>
+
+    <section class="two-column section-block">
+        <article class="panel">
+            <div class="panel-heading"><div><h2>Most planted species</h2><p class="muted">Tree types in your current records.</p></div><span class="panel-emoji">🌳</span></div>
+            {% if species_counts %}
+                {% set max_species = species_counts[0]['tree_count'] %}
+                {% for item in species_counts %}
+                <div class="species-row">
+                    <span>{{ item['species'] }}</span>
+                    <div class="species-track"><span style="width: {{ (item['tree_count'] / max_species * 100) | round }}%"></span></div>
+                    <b>{{ item['tree_count'] }}</b>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><span>🌳</span><b>No species recorded yet.</b><p>Add a tree to start your species summary.</p></div>
+            {% endif %}
+        </article>
+        <article class="panel callout-panel">
+            <div class="callout-icon">🌍</div>
+            <p class="eyebrow dark-eyebrow">SMALL ACTIONS, LASTING IMPACT</p>
+            <h2>Make every planted tree count.</h2>
+            <p class="muted">A tree is more than a number. Record who planted it, where it grows, and how it is doing so your community can keep caring for it.</p>
+            <a href="#add-tree" class="text-link">Add your first or next tree <span>→</span></a>
+        </article>
+    </section>
+
+    <section class="section-block" id="add-tree">
+        <div class="section-heading">
+            <div><p class="eyebrow dark-eyebrow">ADD TO THE GREEN TEAM</p><h2>Register a new tree</h2><p class="muted">Enter the details below. Required fields are marked automatically.</p></div>
+        </div>
+        <form class="panel form-panel" action="{{ url_for('add_tree') }}" method="POST">
+            <div class="form-grid">
+                <label>Tree name / ID *
+                    <input name="tree_name" placeholder="e.g. Neem-001" required maxlength="80">
+                </label>
+                <label>Tree species *
+                    <select name="species" required>
+                        <option value="">Choose a species</option>
+                        <option>Neem</option><option>Peepal</option><option>Banyan</option>
+                        <option>Gulmohar</option><option>Amaltas</option><option>Mango</option>
+                        <option>Jamun</option><option>Other</option>
+                    </select>
+                </label>
+                <label>Planted by (person / class / team) *
+                    <input name="planter" placeholder="e.g. Priya Sharma, Class 10A, Eco Club" required maxlength="100">
+                </label>
+                <label>Plantation location *
+                    <input name="location" placeholder="e.g. College garden" required maxlength="120">
+                </label>
+                <label>Planting date *
+                    <input type="date" name="planted_on" value="{{ today }}" required>
+                </label>
+                <label>Current height (cm) *
+                    <input type="number" name="height_cm" min="0.1" step="0.1" placeholder="e.g. 45" required>
+                </label>
+                <label>Health status *
+                    <select name="status" required><option>Healthy</option><option>Needs attention</option></select>
+                </label>
+                <label>Notes (optional)
+                    <input name="notes" placeholder="e.g. Watered today, new leaves observed" maxlength="300">
+                </label>
+            </div>
+            <div class="form-footer">
+                <p>🌿 Your entry will be stored in the local SQLite database.</p>
+                <button class="button button-primary" type="submit">Save tree record ↗</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="section-block" id="tree-records">
+        <div class="section-heading records-heading">
+            <div><p class="eyebrow dark-eyebrow">THE GROWING REGISTER</p><h2>Tree monitoring records</h2><p class="muted">Search records and update a tree's health status.</p></div>
+            <a class="button button-outline" href="{{ url_for('export_csv') }}">⬇ Export CSV report</a>
+        </div>
+        <form class="filters" method="GET" action="{{ url_for('index') }}#tree-records">
+            <input type="search" name="search" value="{{ search }}" placeholder="Search tree, species, planter, or location…">
+            <select name="status" aria-label="Filter by health status">
+                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All statuses</option>
+                <option value="Healthy" {% if status_filter == 'Healthy' %}selected{% endif %}>Healthy</option>
+                <option value="Needs attention" {% if status_filter == 'Needs attention' %}selected{% endif %}>Needs attention</option>
+            </select>
+            <button class="button button-dark" type="submit">Search</button>
+            <a class="clear-link" href="{{ url_for('index') }}#tree-records">Clear</a>
+        </form>
+        <div class="table-shell">
+            <table>
+                <thead><tr><th>Tree / species</th><th>Planted by</th><th>Location</th><th>Planting date</th><th>Height</th><th>Health</th><th>Actions</th></tr></thead>
+                <tbody>
+                {% for tree in trees %}
+                    <tr>
+                        <td><b>{{ tree['tree_name'] }}</b><small>{{ tree['species'] }}</small></td>
+                        <td>{{ tree['planter'] }}</td>
+                        <td>{{ tree['location'] }}</td>
+                        <td>{{ tree['planted_on'] }}</td>
+                        <td>{{ "%.1f"|format(tree['height_cm']) }} cm</td>
+                        <td><span class="status-pill {% if tree['status'] == 'Healthy' %}status-healthy{% else %}status-attention{% endif %}">{{ tree['status'] }}</span></td>
+                        <td class="action-cell">
+                            <form action="{{ url_for('update_status', tree_id=tree['id']) }}" method="POST" class="inline-form">
+                                {% if tree['status'] == 'Healthy' %}
+                                    <input type="hidden" name="status" value="Needs attention">
+                                    <button class="small-button" type="submit">Needs care</button>
+                                {% else %}
+                                    <input type="hidden" name="status" value="Healthy">
+                                    <button class="small-button" type="submit">Mark healthy</button>
+                                {% endif %}
+                            </form>
+                            <form action="{{ url_for('delete_tree', tree_id=tree['id']) }}" method="POST" class="inline-form" onsubmit="return confirm('Delete this tree record? This cannot be undone.');">
+                                <button class="delete-button" type="submit" aria-label="Delete {{ tree['tree_name'] }}">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7"><div class="empty-state table-empty"><span>🌱</span><b>No matching tree records yet.</b><p>Add a tree using the form above, or clear your search.</p></div></td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="tiny-note">Privacy note: this starter project runs on your own computer. It does not publish these records online.</p>
+    </section>
+
+    <section class="about-strip">
+        <span>🌏</span><div><b>About this Environmental Studies project</b><p>This application supports tree plantation record keeping and follow-up monitoring. The figures shown are calculated from records entered by the user; they are not verified global tree-planting statistics.</p></div>
+    </section>
+</main>
+<footer>🌿 GreenRoots Tree Plantation & Monitoring <span>Built for a greener tomorrow</span></footer>
+<script>
+    // Keep the date field from accepting future dates by default; users can still change it.
+    const dateInput = document.querySelector('input[name="planted_on"]');
+    if (dateInput) dateInput.max = new Date().toISOString().slice(0, 10);
+
+    // Auto-dismiss status messages after a few seconds.
+    document.querySelectorAll('.flash').forEach((message) => {
+        setTimeout(() => message.classList.add('flash-hide'), 4500);
+    });
+</script>
+</body>
+</html>
